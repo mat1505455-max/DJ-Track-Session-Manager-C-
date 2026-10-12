@@ -1,0 +1,91 @@
+#include "AudioTrack.h"
+#include <iostream>
+#include <cstring>
+#include <random>
+
+AudioTrack::AudioTrack(const std::string& title, const std::vector<std::string>& artists, 
+                      int duration, int bpm, size_t waveform_samples)
+    : title(title), artists(artists), duration_seconds(duration), bpm(bpm), 
+      waveform_data(nullptr), waveform_size(waveform_samples) {
+
+    // Allocate memory for waveform analysis
+    waveform_data = new double[waveform_size];
+
+    // Generate some dummy waveform data for testing
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dis(-1.0, 1.0);
+
+    for (size_t i = 0; i < waveform_size; ++i) {
+        waveform_data[i] = dis(gen);
+    }
+}
+
+AudioTrack::~AudioTrack() {
+    delete[] waveform_data;
+    waveform_data = nullptr;
+}
+
+AudioTrack::AudioTrack(const AudioTrack& other)
+    : title(other.title),
+      artists(other.artists),
+      duration_seconds(other.duration_seconds),
+      bpm(other.bpm),
+      waveform_data(new double[other.waveform_size]), 
+      waveform_size(other.waveform_size)
+{
+    for(size_t i=0;i<waveform_size;i++){
+      waveform_data[i]=other.waveform_data[i];  
+    }
+}
+
+AudioTrack& AudioTrack::operator=(const AudioTrack& other) {
+    if (this != &other){
+        delete[] waveform_data;
+        this->title = other.title;
+        this->artists = other.artists; 
+        this->duration_seconds = other.duration_seconds;
+        this->bpm = other.bpm;
+        this->waveform_size = other.waveform_size;
+        waveform_data = new double[waveform_size];
+        for(size_t i=0;i<waveform_size;i++){
+            waveform_data[i]=other.waveform_data[i];  
+        }
+    }
+    return *this;
+}
+
+AudioTrack::AudioTrack(AudioTrack&& other) noexcept
+    : title(std::move(other.title)), 
+      artists(std::move(other.artists)), 
+      duration_seconds(other.duration_seconds), 
+      bpm(other.bpm), 
+      waveform_data(),
+      waveform_size(other.waveform_size) 
+{
+    waveform_data = other.waveform_data; 
+    other.waveform_data = nullptr;
+    other.waveform_size = 0;
+}
+
+AudioTrack& AudioTrack::operator=(AudioTrack&& other) noexcept {
+    if (this != &other) {
+        delete[] waveform_data;
+        title = std::move(other.title);
+        artists = std::move(other.artists);
+        duration_seconds = other.duration_seconds;
+        bpm = other.bpm;
+        waveform_size = other.waveform_size;
+        waveform_data = other.waveform_data;
+        
+        other.waveform_data = nullptr;
+        other.waveform_size = 0;
+    }
+    return *this;
+}
+
+void AudioTrack::get_waveform_copy(double* buffer, size_t buffer_size) const {
+    if (buffer && waveform_data && buffer_size <= waveform_size) {
+        std::memcpy(buffer, waveform_data, buffer_size * sizeof(double));
+    }
+}
